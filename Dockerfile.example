@@ -1,0 +1,38 @@
+# ──────────────────────────────────────────────────────────────────────────
+# Generic Dockerfile for Showrunner-enabled containers
+# ──────────────────────────────────────────────────────────────────────────
+FROM python:3.11-slim
+
+ENV TZ=UTC \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# --- Optional system packages (uncomment as needed) -------------
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#       iproute2 iptables tc sudo tini && \
+#     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# --- Standard non-root user for workloads needing privilege drop
+ARG APP_USER=app_user
+RUN useradd -ms /bin/bash ${APP_USER} && \
+    echo "${APP_USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+WORKDIR /app
+
+# ── Python dependencies (add your own to requirements.txt)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt \
+    fastapi uvicorn psutil ruamel.yaml
+
+# ── Core + interface + your adapter + config
+COPY container_control_core.py .
+COPY app_adapter.py .
+COPY <your_adapter>.py .
+COPY config.yaml .
+
+# ── Application source / binaries
+COPY . .
+
+# ── Runtime
+EXPOSE 8080
+ENTRYPOINT ["python", "-m", "uvicorn", "container_control_core:app", "--host", "0.0.0.0", "--port", "8080"]
