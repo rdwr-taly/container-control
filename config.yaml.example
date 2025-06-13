@@ -1,0 +1,5 @@
+# Example for FlowRunner-cli
+adapter:
+  class: flow_adapter.FlowRunnerAdapter   # dotted-path to your adapter
+  primary_payload_key: flowmap            # key required in /api/start body
+  run_as_user: null                       # or "app_user" for non-root exec
