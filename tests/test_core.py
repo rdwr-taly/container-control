@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.dummy_adapter import DummyAdapter, NoUpdateAdapter
+from tests.dummy_adapter import DummyAdapter, NoUpdateAdapter, ErrorUpdateAdapter
 from tests.conftest import load_core
 
 
@@ -109,3 +109,53 @@ def test_run_as_user(tmp_path):
     client.post("/api/start", json={"payload": 1})
     time.sleep(0.05)
     assert core.adapter.ensure_user_cmd[:4] == ["sudo", "-E", "-u", "appuser"]
+
+
+def test_update_requires_running(tmp_path):
+    cfg_path = make_config(tmp_path, "tests.dummy_adapter.DummyAdapter")
+    client, _ = load_core({"config_path": str(cfg_path)})
+
+    resp = client.post("/api/update", json={"x": 1})
+    assert resp.status_code == 400
+
+
+def test_stop_when_not_running(tmp_path):
+    cfg_path = make_config(tmp_path, "tests.dummy_adapter.DummyAdapter")
+    client, _ = load_core({"config_path": str(cfg_path)})
+
+    resp = client.post("/api/stop", json={})
+    assert resp.status_code == 200
+    assert resp.json()["message"] == "nothing to stop"
+
+
+def test_restart_cycle(tmp_path):
+    cfg_path = make_config(tmp_path, "tests.dummy_adapter.DummyAdapter")
+    client, core = load_core({"config_path": str(cfg_path)})
+
+    client.post("/api/start", json={"payload": 1})
+    time.sleep(0.05)
+
+    client.post("/api/start", json={"payload": 2})
+    time.sleep(0.05)
+    assert core.adapter.started_payload == {"payload": 2}
+    assert core.adapter.stopped
+
+
+def test_update_exception(tmp_path):
+    cfg_path = make_config(tmp_path, "tests.dummy_adapter.ErrorUpdateAdapter")
+    client, _ = load_core({"config_path": str(cfg_path)})
+
+    client.post("/api/start", json={"payload": 1})
+    time.sleep(0.05)
+    resp = client.post("/api/update", json={"x": 1})
+    assert resp.status_code == 500
+
+
+def test_ensure_user_non_root(tmp_path, monkeypatch):
+    cfg_path = make_config(tmp_path, "tests.dummy_adapter.DummyAdapter", "appuser")
+    monkeypatch.setattr(os, "geteuid", lambda: 1000)
+    client, core = load_core({"config_path": str(cfg_path)})
+
+    client.post("/api/start", json={"payload": 1})
+    time.sleep(0.05)
+    assert core.adapter.ensure_user_cmd == ["dummy"]

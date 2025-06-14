@@ -44,3 +44,8 @@ class DummyAdapter(ApplicationAdapter):
 class NoUpdateAdapter(DummyAdapter):
     def update(self, update_payload: Dict[str, Any]) -> bool:
         raise NotImplementedError
+
+
+class ErrorUpdateAdapter(DummyAdapter):
+    def update(self, update_payload: Dict[str, Any]) -> bool:
+        raise ValueError("boom")
