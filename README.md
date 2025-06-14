@@ -10,11 +10,12 @@ This repository explains how to integrate any containerised workload with Showru
 
 1. [Concept](#concept)
 2. [Files You Care About](#files-you-care-about)
-3. [Building an Adapter](#building-an-adapter)
-4. [Configuration (`config.yaml`)](#configuration-configyaml)
-5. [Dockerfile Template](#dockerfile-template)
-6. [API Reference](#api-reference)
-7. [Operational Tips](#operational-tips)
+3. [Quickstart (`bootstrap.py`)](#quickstart-bootstrappy)
+4. [Building an Adapter](#building-an-adapter)
+5. [Configuration (`config.yaml`)](#configuration-configyaml)
+6. [Dockerfile Template](#dockerfile-template)
+7. [API Reference](#api-reference)
+8. [Operational Tips](#operational-tips)
 
 ---
 
@@ -53,6 +54,19 @@ Your real workload (async code, binary, …)
 | `my_adapter.py`             | No               | Your shim – implements the contract.                                |
 | `config.yaml`               | No               | Declares which adapter to load & options.                           |
 | `Dockerfile`                | No               | Builds the image using the template below.                          |
+
+---
+
+## Quickstart (`bootstrap.py`)
+
+Run the helper script to copy the core files into your project:
+
+```bash
+python bootstrap.py /path/to/your/app
+```
+
+This creates `container_control_core.py`, `app_adapter.py`, `config.yaml`,
+and a skeleton adapter.  A Dockerfile is also copied if none exists.
 
 ---
 
