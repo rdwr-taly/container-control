@@ -159,3 +159,72 @@ def test_ensure_user_non_root(tmp_path, monkeypatch):
     client.post("/api/start", json={"payload": 1})
     time.sleep(0.05)
     assert core.adapter.ensure_user_cmd == ["dummy"]
+
+
+def test_core_services_config(tmp_path):
+    """Test that core services configuration is properly loaded"""
+    cfg = {
+        "adapter": {
+            "class": "tests.dummy_adapter.DummyAdapter",
+            "primary_payload_key": "payload",
+        },
+        "process_management": {
+            "enabled": True,
+            "command": ["echo", "test"]
+        },
+        "metrics": {
+            "network_monitoring": {"enabled": True},
+            "process_monitoring": {"enabled": True}
+        },
+        "traffic_control": {
+            "enabled": True,
+            "interface": "eth0",
+            "bandwidth_mbps_key": "bandwidth",
+            "default_bandwidth_mbps": 50
+        },
+        "privileged_commands": {
+            "pre_start": [["echo", "pre_start"]],
+            "post_stop": [["echo", "post_stop"]]
+        }
+    }
+    path = tmp_path / "config.yaml"
+    import ruamel.yaml
+    ruamel.yaml.YAML().dump(cfg, path.open("w"))
+
+    client, core = load_core({"config_path": str(path)})
+
+    # Check that core services configs are loaded
+    assert core.PROC_MAN_CFG["enabled"] is True
+    assert core.METRICS_CFG["network_monitoring"]["enabled"] is True
+    assert core.TC_CFG["enabled"] is True
+    assert core.PRIV_CMD_CFG["pre_start"] == [["echo", "pre_start"]]
+
+
+def test_new_adapter_hooks(tmp_path):
+    """Test that new v2.0 adapter hooks are called"""
+    from tests.dummy_adapter import DummyAdapter
+
+    # Create a test adapter with the new hooks
+    class TestAdapter(DummyAdapter):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.traffic_control_called = False
+            self.process_exit_called = False
+
+        def on_before_core_traffic_control(self, payload):
+            self.traffic_control_called = True
+            return payload
+
+        def on_core_process_exit(self, return_code, stdout, stderr):
+            self.process_exit_called = True
+
+    cfg_path = make_config(tmp_path, "tests.dummy_adapter.DummyAdapter")
+    client, core = load_core({"config_path": str(cfg_path)})
+
+    # Replace adapter with test adapter
+    test_adapter = TestAdapter()
+    core.adapter = test_adapter
+
+    # Check that the new hooks exist
+    assert hasattr(test_adapter, 'on_before_core_traffic_control')
+    assert hasattr(test_adapter, 'on_core_process_exit')

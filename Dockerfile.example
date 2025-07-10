@@ -8,9 +8,10 @@ ENV TZ=UTC \
     PYTHONUNBUFFERED=1
 
 # --- Optional system packages (uncomment as needed) -------------
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#       iproute2 iptables tc sudo tini && \
-#     apt-get clean && rm -rf /var/lib/apt/lists/*
+# Required for traffic control and privileged commands services
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      iproute2 iptables sudo && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # --- Standard non-root user for workloads needing privilege drop
 ARG APP_USER=app_user
@@ -20,9 +21,12 @@ RUN useradd -ms /bin/bash ${APP_USER} && \
 WORKDIR /app
 
 # ── Python dependencies (add your own to requirements.txt)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
-    fastapi uvicorn psutil ruamel.yaml
+# Create requirements.txt if it doesn't exist
+RUN echo "# Add your Python dependencies here" > requirements.txt.tmp && \
+    [ -f requirements.txt ] && cat requirements.txt >> requirements.txt.tmp || true && \
+    mv requirements.txt.tmp requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir fastapi uvicorn psutil ruamel.yaml
 
 # ── Core + interface + your adapter + config
 COPY container_control_core.py .
@@ -33,6 +37,6 @@ COPY config.yaml .
 # ── Application source / binaries
 COPY . .
 
-# ── Runtime
+# ── Runtime (requires CAP_NET_ADMIN for traffic control)
 EXPOSE 8080
-ENTRYPOINT ["python", "-m", "uvicorn", "container_control_core:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "-m", "uvicorn", "container_control_core:app", "--host", "0.0.0.0", "--port", "8080"]
