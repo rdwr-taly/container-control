@@ -323,15 +323,25 @@ async def api_update(body: UpdateBody):
     payload = body.root
     if state["app_status"] != "running":
         raise HTTPException(400, "Application not running, cannot update.")
+    tc_keys = [TC_CFG.get("bandwidth_mbps_key"), TC_CFG.get("latency_ms_key")]
+    tc_requested = TC_CFG.get("enabled") and any(
+        k and k in payload for k in tc_keys
+    )
+    if tc_requested:
+        _apply_traffic_control(payload)
 
     try:
-        # The adapter is always responsible for handling updates.
+        # The adapter is responsible for handling non-TC updates.
         updated = adapter.update(payload)
-        if updated:
+        if updated or tc_requested:
             return {"message": "update applied"}
         raise HTTPException(409, "adapter declined update")
     except NotImplementedError:
+        if tc_requested:
+            return {"message": "update applied"}
         raise HTTPException(409, "live-update not supported by this adapter") from None
+    except HTTPException:
+        raise
     except Exception as exc:
         log.exception("adapter.update failed")
         raise HTTPException(500, str(exc))
@@ -340,7 +350,7 @@ async def api_update(body: UpdateBody):
 @app.post("/api/stop")
 async def api_stop(_: StopBody):
     if state["app_status"] != "running":
-        return {"message": "application not running, nothing to stop"}
+        return {"message": "nothing to stop"}
     _thread(_stop)
     return {"message": "stop initiated"}
 
@@ -390,6 +400,7 @@ async def api_metrics():
 
     # --- Adapter-provided metrics ---
     base_metrics["adapter_metrics"] = adapter.get_metrics() or {}
+    base_metrics["metrics"] = base_metrics["adapter_metrics"]
 
     return JSONResponse(base_metrics)
 

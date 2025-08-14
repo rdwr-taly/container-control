@@ -24,6 +24,16 @@ def make_config(tmp_path: Path, adapter_cls: str, run_as_user: str | None = None
     return path
 
 
+class TCOnlyAdapter(NoUpdateAdapter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.start_calls = 0
+
+    def start(self, start_payload, *, ensure_user):
+        self.start_calls += 1
+        return super().start(start_payload, ensure_user=ensure_user)
+
+
 def test_start_stop_cycle(tmp_path):
     cfg_path = make_config(tmp_path, "tests.dummy_adapter.DummyAdapter")
     client, core = load_core({"config_path": str(cfg_path)})
@@ -72,6 +82,47 @@ def test_update_not_supported(tmp_path):
     time.sleep(0.05)
     resp = client.post("/api/update", json={"x": 1})
     assert resp.status_code == 409
+
+
+def test_tc_update_without_restart(tmp_path, monkeypatch):
+    cfg = {
+        "adapter": {
+            "class": "tests.test_core.TCOnlyAdapter",
+            "primary_payload_key": "payload",
+        },
+        "traffic_control": {
+            "enabled": True,
+            "interface": "eth0",
+            "bandwidth_mbps_key": "bandwidth",
+            "default_bandwidth_mbps": 50,
+        },
+    }
+    path = tmp_path / "config.yaml"
+    import ruamel.yaml
+    ruamel.yaml.YAML().dump(cfg, path.open("w"))
+
+    client, core = load_core({"config_path": str(path)})
+
+    tc_calls: list[dict] = []
+
+    def fake_tc(payload):
+        tc_calls.append(payload.copy())
+
+    monkeypatch.setattr(core, "_apply_traffic_control", fake_tc)
+
+    client.post("/api/start", json={"payload": 1, "bandwidth": 10})
+    time.sleep(0.05)
+    adapter = core.adapter
+    assert isinstance(adapter, TCOnlyAdapter)
+    assert adapter.start_calls == 1
+    assert len(tc_calls) == 1
+
+    resp = client.post("/api/update", json={"bandwidth": 20})
+    assert resp.status_code == 200
+    time.sleep(0.05)
+    assert adapter.start_calls == 1
+    assert len(tc_calls) == 2
+    assert tc_calls[-1]["bandwidth"] == 20
 
 
 def test_metrics_and_prometheus(tmp_path):
