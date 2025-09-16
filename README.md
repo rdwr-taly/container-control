@@ -381,7 +381,7 @@ tokens are stored in the repository.
    the environment URL to <https://pypi.org/project/container-control/>.
 2. On PyPI, add a Trusted Publisher with the following values:
    - **PyPI project name**: `container-control`
-   - **Owner**: `showrunner-dev`
+   - **Owner**: `rdwr-taly`
    - **Repository name**: `container-control`
    - **Workflow name**: `publish.yml`
    - **Environment name**: `pypi`

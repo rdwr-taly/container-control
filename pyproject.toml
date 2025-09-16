@@ -39,9 +39,9 @@ test = [
 container-control-bootstrap = "bootstrap:main"
 
 [project.urls]
-Documentation = "https://github.com/showrunner-dev/container-control#readme"
-Repository = "https://github.com/showrunner-dev/container-control"
-Issues = "https://github.com/showrunner-dev/container-control/issues"
+Documentation = "https://github.com/rdwr-taly/container-control#readme"
+Repository = "https://github.com/rdwr-taly/container-control"
+Issues = "https://github.com/rdwr-taly/container-control/issues"
 
 [tool.setuptools]
 include-package-data = true
