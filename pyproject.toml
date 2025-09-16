@@ -45,8 +45,12 @@ Issues = "https://github.com/showrunner-dev/container-control/issues"
 
 [tool.setuptools]
 include-package-data = true
-packages = ["container_control", "container_control.templates"]
+package-dir = {"" = "src"}
 py-modules = ["container_control_core", "app_adapter", "bootstrap"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["container_control*"]
 
 [tool.setuptools.package-data]
 container_control = ["templates/*.example"]
