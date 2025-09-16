@@ -13,12 +13,13 @@ The core now provides optional built-in services for process management, metrics
 1. [Concept](#concept)
 2. [Files You Care About](#files-you-care-about)
 3. [Core Services](#core-services)
-4. [Quickstart (`bootstrap.py`)](#quickstart-bootstrappy)
-5. [Building an Adapter](#building-an-adapter)
-6. [Configuration (`config.yaml`)](#configuration-configyaml)
-7. [Dockerfile Template](#dockerfile-template)
-8. [API Reference](#api-reference)
-9. [Operational Tips](#operational-tips)
+4. [Installation](#installation)
+5. [Quickstart (`container-control-bootstrap`)](#quickstart-container-control-bootstrap)
+6. [Building an Adapter](#building-an-adapter)
+7. [Configuration (`config.yaml`)](#configuration-configyaml)
+8. [Dockerfile Template](#dockerfile-template)
+9. [API Reference](#api-reference)
+10. [Operational Tips](#operational-tips)
 
 ---
 
@@ -95,16 +96,44 @@ Container Control Core v2.0 includes optional built-in services that can handle 
 
 ---
 
-## Quickstart (`bootstrap.py`)
+## Installation
 
-Run the helper script to copy the core files into your project:
+Install the core and scaffolding tools directly from PyPI:
 
 ```bash
-python bootstrap.py /path/to/your/app
+pip install container-control
+```
+
+This installs the runtime modules (`container_control_core.py`,
+`app_adapter.py`, the optional FastAPI application) along with helper
+templates and a Bootstrap CLI.  You can also import
+`container_control.ApplicationAdapter` or the scaffolding helpers from
+Python code.
+
+---
+
+## Quickstart (`container-control-bootstrap`)
+
+Run the helper CLI to copy the core files into your project:
+
+```bash
+container-control-bootstrap /path/to/your/app
 ```
 
 This creates `container_control_core.py`, `app_adapter.py`, `config.yaml`,
 and a skeleton adapter.  A Dockerfile is also copied if none exists.
+Pass `--adapter other_name.py` to pick a different adapter filename.  The
+command only generates the config, Dockerfile, and adapter stub if those
+files are missing so that you can re-run it safely to refresh the core
+modules.
+
+Programmatic scaffolding is available via:
+
+```python
+from container_control import write_scaffold
+
+write_scaffold("/path/to/your/app")
+```
 
 ---
 
