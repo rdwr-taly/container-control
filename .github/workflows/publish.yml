@@ -29,7 +29,7 @@ jobs:
       - name: Verify requested version
         run: |
           expected="${{ github.event.inputs.release-version }}"
-          actual=$(python -c "import tomllib;\nwith open('pyproject.toml', 'rb') as fh:\n    print(tomllib.load(fh)['project']['version'])")
+          actual=$(python -c "import pathlib, tomllib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
           if [ "$expected" != "$actual" ]; then
             echo "Requested version '$expected' does not match pyproject.toml version '$actual'." >&2
             exit 1
