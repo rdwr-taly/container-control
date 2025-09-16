@@ -21,6 +21,7 @@ The core now provides optional built-in services for process management, metrics
 9. [Dockerfile Template](#dockerfile-template)
 10. [API Reference](#api-reference)
 11. [Operational Tips](#operational-tips)
+12. [Publishing to PyPI](#publishing-to-pypi)
 
 ---
 
@@ -369,13 +370,35 @@ All timestamps are UTC ISO-8601 (`YYYY-MM-DDTHH:MM:SS.mmmmmmZ`).
 
 ## Publishing to PyPI
 
-1. Update `CHANGELOG.md` and bump `pyproject.toml` / `container_control`
-   version information.
-2. Run the full test suite with `pytest` to ensure the core behaviour is
-   unchanged.
-3. Remove any previous build artefacts (`rm -rf dist build *.egg-info`) and
-   build fresh wheels and source archives using `python -m build`.
-4. Upload the contents of `dist/` with `twine upload dist/*`.
+Container Control is published through the manual **Publish to PyPI**
+workflow (`.github/workflows/publish.yml`). The job uses PyPI's Trusted
+Publishers integration with GitHub OpenID Connect, so no long-lived API
+tokens are stored in the repository.
+
+### One-time setup
+
+1. In **Settings → Environments**, create an environment named `pypi` and set
+   the environment URL to <https://pypi.org/project/container-control/>.
+2. On PyPI, add a Trusted Publisher with the following values:
+   - **PyPI project name**: `container-control`
+   - **Owner**: `showrunner-dev`
+   - **Repository name**: `container-control`
+   - **Workflow name**: `publish.yml`
+   - **Environment name**: `pypi`
+3. (Optional) Require reviewers or branch protections on the `pypi`
+   environment before the workflow can deploy.
+
+No repository secrets or variables are required; PyPI issues a short-lived
+token to the workflow at runtime via OIDC.
+
+### Releasing
+
+1. Update `CHANGELOG.md` and bump the version in `pyproject.toml`.
+2. Run the test suite (`pytest`) to confirm behaviour before publishing.
+3. Trigger **Publish to PyPI** from the *Actions* tab and supply the version
+   from `pyproject.toml` when prompted.
+4. The workflow builds fresh distributions with `python -m build` and, after
+   the environment approval (if configured), uploads them to PyPI.
 
 Happy Showrunning! :clapper:
 
