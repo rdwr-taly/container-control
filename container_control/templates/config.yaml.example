@@ -1,0 +1,90 @@
+# -----------------------------------------------------------------------------
+# Robust Example Configuration for Container Control Core v2.0
+# -----------------------------------------------------------------------------
+
+# --- Adapter Configuration (Required) ---
+# Defines the specific adapter to load and how it should behave.
+adapter:
+  # Dotted-path import for your custom adapter class.
+  class: my_ddos_adapter.DDoSAdapter
+
+  # The key that MUST be present in the /api/start payload.
+  # If this key is missing, the start request will be rejected.
+  primary_payload_key: target_url
+
+  # The non-root user to run the main application process as.
+  # The core will use 'sudo -u' to drop privileges from root.
+  # Set to null or omit to run as the container's default user (e.g., root).
+  run_as_user: app_user
+
+# -----------------------------------------------------------------------------
+# --- Core Process Management (Optional Service) ---
+# Let the core handle starting and stopping your application process.
+process_management:
+  enabled: true
+
+  # Use 'command_factory' for dynamic command generation. The core will call
+  # the specified method on your adapter instance to get the command list.
+  # This is the most flexible and recommended approach.
+  command_factory: "my_ddos_adapter.DDoSAdapter.build_attack_command"
+
+  # --- OR ---
+
+  # Use 'command' for simpler, template-based commands.
+  # The core will replace placeholders like {target_url} with values
+  # from the /api/start payload. (Commented out because factory is preferred).
+  # command:
+  #   - ./bin/attack-tool
+  #   - --url
+  #   - "{target_url}" # Value from the start payload
+  #   - --threads
+  #   - "{threads}"
+  #   - --mode
+  #   - "http-flood"
+
+# -----------------------------------------------------------------------------
+# --- Core Metrics Service (Optional Service) ---
+# Let the core automatically collect common metrics.
+metrics:
+  # Enable automatic collection of network I/O statistics (bytes/packets sent/received).
+  network_monitoring:
+    enabled: true
+    interface: "eth0" # The network interface to monitor.
+
+  # Enable automatic collection of the core-managed process's stats (CPU, Memory, PID).
+  # This only works if process_management is also enabled.
+  process_monitoring:
+    enabled: true
+
+# -----------------------------------------------------------------------------
+# --- Core Traffic Control (Optional Service) ---
+# Let the core manage network shaping using 'tc'. This requires NET_ADMIN capability.
+traffic_control:
+  enabled: true
+  interface: "eth0" # The interface to apply rules to.
+
+  # The key in the /api/start payload that specifies the bandwidth limit.
+  bandwidth_mbps_key: "bandwidth_limit_mbps"
+  # A default value to use if the key is not in the payload.
+  default_bandwidth_mbps: 50
+
+  # The key for latency simulation.
+  latency_ms_key: "latency_in_ms"
+  default_latency_ms: 20 # Default to 20ms latency.
+
+# -----------------------------------------------------------------------------
+# --- Privileged Commands (Optional Service) ---
+# Declaratively run commands as root at different lifecycle stages.
+# Useful for system tuning or setting up firewall rules.
+privileged_commands:
+  # Commands to run as root BEFORE the adapter's pre_start_hooks are called.
+  pre_start:
+    # Example: Increase network connection backlog.
+    - ["sysctl", "-w", "net.core.somaxconn=4096"]
+    # Example: Allow established connections through a firewall.
+    - ["iptables", "-A", "INPUT", "-m", "conntrack", "--ctstate", "ESTABLISHED,RELATED", "-j", "ACCEPT"]
+
+  # Commands to run as root AFTER the adapter's post_stop_hooks are called.
+  post_stop:
+    # Example: Flush iptables rules for a clean state.
+    - ["iptables", "-F"]

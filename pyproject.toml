@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "container-control"
+version = "0.1.0"
+description = "Container Control Core for Showrunner"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Proprietary"}
+authors = [
+    {name = "Showrunner Team"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Framework :: FastAPI",
+    "License :: Other/Proprietary License",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    "fastapi>=0.95",
+    "uvicorn>=0.20",
+    "psutil>=5.9",
+    "ruamel.yaml>=0.17",
+    "pydantic>=1.10",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7",
+    "httpx>=0.24",
+]
+
+[project.scripts]
+container-control-bootstrap = "bootstrap:main"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["container_control"]
+py-modules = ["container_control_core", "app_adapter", "bootstrap"]
+
+[tool.setuptools.package-data]
+container_control = ["templates/*.example"]
