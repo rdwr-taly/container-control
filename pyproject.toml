@@ -4,19 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "container-control"
-version = "0.1.0"
+version = "1.1.0"
 description = "Container Control Core for Showrunner"
-readme = "README.md"
+readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
-license = {text = "Proprietary"}
+license = "LicenseRef-Proprietary"
+license-files = ["LICENSE"]
 authors = [
     {name = "Showrunner Team"},
 ]
+keywords = ["containers", "fastapi", "scaffolding", "showrunner"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Framework :: FastAPI",
-    "License :: Other/Proprietary License",
     "Operating System :: POSIX :: Linux",
     "Topic :: System :: Systems Administration",
 ]
@@ -37,9 +38,14 @@ test = [
 [project.scripts]
 container-control-bootstrap = "bootstrap:main"
 
+[project.urls]
+Documentation = "https://github.com/showrunner-dev/container-control#readme"
+Repository = "https://github.com/showrunner-dev/container-control"
+Issues = "https://github.com/showrunner-dev/container-control/issues"
+
 [tool.setuptools]
 include-package-data = true
-packages = ["container_control"]
+packages = ["container_control", "container_control.templates"]
 py-modules = ["container_control_core", "app_adapter", "bootstrap"]
 
 [tool.setuptools.package-data]

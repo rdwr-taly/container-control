@@ -2,7 +2,7 @@
 
 **One immutable core + lightweight adapter + optional services = zero boilerplate.**
 
-This repository explains how to integrate any containerised workload with Showrunner using the **Container Control Core (CCC) v2.0**.
+This repository explains how to integrate any containerised workload with Showrunner using the **Container Control Core (CCC) v1.1**.
 
 The core now provides optional built-in services for process management, metrics collection, traffic control, and privileged operations - reducing the complexity of your adapters even further.
 
@@ -28,7 +28,7 @@ The core now provides optional built-in services for process management, metrics
 ```
 (root, FastAPI)
 ┌──────────────────────────────────────────┐
-│ container_control_core.py (v2.0)         │
+│ container_control_core.py (v1.1)         │
 │ • HTTP API (/api/*, /metrics)            │
 │ • lifecycle / state / signals            │
 │ • container-level metrics                │
@@ -44,13 +44,13 @@ The core now provides optional built-in services for process management, metrics
  app_adapter.py  ← common interface
               │ subclassed by you
               ▼
- my_adapter.py  ← 5‑30 LOC typical (v2.0)
+ my_adapter.py  ← 5‑30 LOC typical (v1.1)
               │ calls (if needed)
               ▼
 Your real workload (async code, binary, …)
 ```
 
-*All containers share the **exact same** `container_control_core.py` v2.0; only `my_adapter.py` and `config.yaml` vary per application. The core's optional services can eliminate most boilerplate code.*
+*All containers share the **exact same** `container_control_core.py` v1.1; only `my_adapter.py` and `config.yaml` vary per application. The core's optional services can eliminate most boilerplate code.*
 
 ---
 
@@ -68,7 +68,7 @@ Your real workload (async code, binary, …)
 
 ## Core Services
 
-Container Control Core v2.0 includes optional built-in services that can handle common container operations, reducing the complexity of your adapters:
+Container Control Core v1.1 includes optional built-in services that can handle common container operations, reducing the complexity of your adapters:
 
 ### Process Management Service
 - **Purpose**: Let the core manage your application process lifecycle
@@ -139,7 +139,7 @@ write_scaffold("/path/to/your/app")
 
 ## Building an Adapter
 
-Copy `app_adapter.py` into your repo, then create `my_adapter.py`. With v2.0's core services, adapters can be much simpler:
+Copy `app_adapter.py` into your repo, then create `my_adapter.py`. With v1.1's core services, adapters can be much simpler:
 
 ### Simple Adapter (using core services)
 ```python
@@ -197,7 +197,7 @@ class MyAdapter(ApplicationAdapter):
         )
 ```
 
-**v2.0 adapter size**: Often < 15 lines when using core services!
+**v1.1 adapter size**: Often < 15 lines when using core services!
 **Traditional adapter size**: 20-40 lines when managing everything manually.
 
 ---
@@ -336,8 +336,18 @@ All timestamps are UTC ISO-8601 (`YYYY-MM-DDTHH:MM:SS.mmmmmmZ`).
 
 ### Upgrading
 - **Core updates**: Replace `container_control_core.py` in the image
-- **Adapter compatibility**: v2.0 is backward compatible with v1.x adapters
+- **Adapter compatibility**: v1.1 is backward compatible with v1.x adapters
 - **New services**: Add optional service configs without breaking existing deployments
+
+## Publishing to PyPI
+
+1. Update `CHANGELOG.md` and bump `pyproject.toml` / `container_control`
+   version information.
+2. Run the full test suite with `pytest` to ensure the core behaviour is
+   unchanged.
+3. Remove any previous build artefacts (`rm -rf dist build *.egg-info`) and
+   build fresh wheels and source archives using `python -m build`.
+4. Upload the contents of `dist/` with `twine upload dist/*`.
 
 Happy Showrunning! :clapper:
 

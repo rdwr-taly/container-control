@@ -252,7 +252,7 @@ def test_core_services_config(tmp_path):
 
 
 def test_new_adapter_hooks(tmp_path):
-    """Test that new v2.0 adapter hooks are called"""
+    """Test that new v1.1 adapter hooks are called"""
     from tests.dummy_adapter import DummyAdapter
 
     # Create a test adapter with the new hooks
