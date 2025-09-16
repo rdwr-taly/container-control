@@ -78,6 +78,25 @@ Working inside a clone, install dependencies with `pip install -e .` so the
 `src/` directory is on the Python path. The automated test suite mirrors this
 layout by placing `src/` at the front of `sys.path`.
 
+### Code map for automation & code-reading agents
+
+Agents or humans inspecting the published wheel will see the same structure as
+the source tree above. The key modules and the responsibilities they cover are:
+
+| Module | What it provides | Typical consumers |
+| --- | --- | --- |
+| `container_control_core` | The FastAPI service. Hosts REST, Prometheus, optional process/metrics/traffic/privileged services. | Runtime containers only. The file ships verbatim so adapters can rely on a stable API. |
+| `app_adapter` | Abstract base class adapters must subclass. Documents lifecycle hooks such as `start`, `stop`, and `update`. | Adapter authors. Keep this file identical across services. |
+| `bootstrap` | CLI entry point `container-control-bootstrap`. Calls `write_scaffold()` to copy the canonical files into a target directory. | Developers who want to initialise a project or refresh the canonical files. |
+| `container_control/__init__.py` | Convenience exports so `from container_control import write_scaffold` works without drilling into submodules. Also exposes the installed version. | Library users and automation tools. |
+| `container_control/scaffold.py` | The implementation behind scaffolding helpers. Loads byte-for-byte copies of the canonical modules and resource templates. | CLI + advanced users needing programmatic access. |
+| `container_control/templates/` | Template assets for `config.yaml` and the Dockerfile example. | Scaffolding utilities. |
+
+When browsing the wheel contents you can therefore start with
+`container_control_core` to understand the runtime API and then follow imports
+into `app_adapter` to see the adapter contract. The remaining modules focus on
+setting up those two canonical files.
+
 ---
 
 ## Files You Care About

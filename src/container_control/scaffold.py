@@ -1,4 +1,11 @@
-"""Utilities for generating Container Control scaffolds."""
+"""Utilities for generating Container Control scaffolds.
+
+The functions in this module intentionally mirror the CLI behaviour provided by
+:mod:`bootstrap`.  They return byte content so that callers can choose whether
+to write to disk, embed the files inside another tool, or perform inspections
+during automated reviews.  This mirrors the layout and file contents that ship
+on PyPI.  No templating or mutation happens at runtime.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +14,12 @@ from importlib import resources as importlib_resources
 from pathlib import Path
 import textwrap
 from typing import Dict
+
+ScaffoldContents = Dict[str, bytes]
+"""Dictionary mapping filenames to their raw bytes in the scaffold."""
+
+WrittenFiles = Dict[str, Path]
+"""Dictionary mapping filenames to where they were written on disk."""
 
 _MODULE_TEMPLATES = {
     "container_control_core": "container_control_core.py",
@@ -43,6 +56,12 @@ class ScaffoldError(RuntimeError):
 
 
 def _load_module_bytes(module_name: str) -> bytes:
+    """Return the raw bytes of an importable module.
+
+    The helper keeps :mod:`container_control_core` and :mod:`app_adapter`
+    identical across every generated scaffold.  It copies their canonical
+    versions directly from the installed distribution.
+    """
     spec = importlib.util.find_spec(module_name)
     if spec is None or spec.origin is None or spec.loader is None:
         raise ScaffoldError(f"Unable to locate module '{module_name}'")
@@ -53,6 +72,7 @@ def _load_module_bytes(module_name: str) -> bytes:
 
 
 def _load_resource_bytes(resource_name: str) -> bytes:
+    """Return bytes from the package data templates directory."""
     try:
         resource = importlib_resources.files(
             _TEMPLATES_PACKAGE,
@@ -65,21 +85,34 @@ def _load_resource_bytes(resource_name: str) -> bytes:
 
 
 def render_adapter_stub() -> str:
-    """Return the default adapter stub as a string."""
+    """Return the default adapter stub as a string.
+
+    Useful for documentation tooling that wants to display the scaffold without
+    writing to disk.
+    """
 
     return _ADAPTER_STUB
 
 
-def scaffold_files(adapter_filename: str | None = "my_adapter.py") -> Dict[str, bytes]:
-    """Return the files that make up a default scaffold.
+def scaffold_files(
+    adapter_filename: str | None = "my_adapter.py",
+) -> ScaffoldContents:
+    """Return the byte representation of the default scaffold files.
 
     Parameters
     ----------
     adapter_filename:
         Name of the adapter stub file to include. Use ``None`` to skip it.
+
+    Returns
+    -------
+    dict
+        Mapping of filenames to bytes. The dictionary always includes the
+        canonical ``container_control_core.py`` and ``app_adapter.py`` modules
+        plus the config and Dockerfile templates. The adapter stub is optional.
     """
 
-    files: Dict[str, bytes] = {}
+    files: ScaffoldContents = {}
     for module_name, target_name in _MODULE_TEMPLATES.items():
         files[target_name] = _load_module_bytes(module_name)
     for dest_name, resource_name in _RESOURCE_TEMPLATES.items():
@@ -93,19 +126,29 @@ def write_scaffold(
     destination: Path | str,
     *,
     adapter_filename: str | None = "my_adapter.py",
-) -> Dict[str, Path]:
+) -> WrittenFiles:
     """Write the default scaffold into ``destination``.
 
-    Core modules are always overwritten. The config, Dockerfile, and adapter
-    stub are created only if the destination file does not already exist.
-    Returns a mapping of filenames to their on-disk paths for the files that
-    were written during this invocation.
+    Parameters
+    ----------
+    destination:
+        Directory that should receive the canonical files.
+    adapter_filename:
+        Optional filename for the adapter stub.
+        Passing ``None`` skips creating an adapter.
+
+    Returns
+    -------
+    dict
+        Files that were actually written in this invocation.  Core modules are
+        always replaced to guarantee parity with the PyPI release, whereas the
+        config, Dockerfile, and adapter stub respect any existing files.
     """
 
     dest_path = Path(destination)
     dest_path.mkdir(parents=True, exist_ok=True)
 
-    written: Dict[str, Path] = {}
+    written: WrittenFiles = {}
     files = scaffold_files(adapter_filename)
 
     for filename, content in files.items():

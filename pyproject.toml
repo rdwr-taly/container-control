@@ -42,6 +42,7 @@ container-control-bootstrap = "bootstrap:main"
 Documentation = "https://github.com/rdwr-taly/container-control#readme"
 Repository = "https://github.com/rdwr-taly/container-control"
 Issues = "https://github.com/rdwr-taly/container-control/issues"
+Changelog = "https://github.com/rdwr-taly/container-control/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 include-package-data = true
