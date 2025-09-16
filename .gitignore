@@ -1,2 +1,3 @@
 __pycache__
 container-control.code-workspace
+*.egg-info/

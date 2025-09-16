@@ -11,15 +11,16 @@ The core now provides optional built-in services for process management, metrics
 ## Contents
 
 1. [Concept](#concept)
-2. [Files You Care About](#files-you-care-about)
-3. [Core Services](#core-services)
-4. [Installation](#installation)
-5. [Quickstart (`container-control-bootstrap`)](#quickstart-container-control-bootstrap)
-6. [Building an Adapter](#building-an-adapter)
-7. [Configuration (`config.yaml`)](#configuration-configyaml)
-8. [Dockerfile Template](#dockerfile-template)
-9. [API Reference](#api-reference)
-10. [Operational Tips](#operational-tips)
+2. [Repository Layout](#repository-layout)
+3. [Files You Care About](#files-you-care-about)
+4. [Core Services](#core-services)
+5. [Installation](#installation)
+6. [Quickstart (`container-control-bootstrap`)](#quickstart-container-control-bootstrap)
+7. [Building an Adapter](#building-an-adapter)
+8. [Configuration (`config.yaml`)](#configuration-configyaml)
+9. [Dockerfile Template](#dockerfile-template)
+10. [API Reference](#api-reference)
+11. [Operational Tips](#operational-tips)
 
 ---
 
@@ -54,7 +55,34 @@ Your real workload (async code, binary, …)
 
 ---
 
+## Repository Layout
+
+This project follows the standard `src/` layout so the packaged wheel and the
+checked-out repository have the same module structure:
+
+```text
+src/
+├── app_adapter.py
+├── bootstrap.py
+├── container_control/
+│   ├── __init__.py
+│   ├── scaffold.py
+│   └── templates/
+│       ├── Dockerfile.example
+│       └── config.yaml.example
+└── container_control_core.py
+```
+
+Working inside a clone, install dependencies with `pip install -e .` so the
+`src/` directory is on the Python path. The automated test suite mirrors this
+layout by placing `src/` at the front of `sys.path`.
+
+---
+
 ## Files You Care About
+
+*In this repository the canonical source files live under `src/`, but the
+scaffold command copies them into the destination project root.*
 
 | File                        | Keep unmodified? | Purpose                                                             |
 |-----------------------------|------------------|---------------------------------------------------------------------|
