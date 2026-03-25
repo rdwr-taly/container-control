@@ -270,7 +270,7 @@ CMD ["python", "-m", "uvicorn", "container_control_core:app", "--host", "0.0.0.0
 | Method | Path          | Description                                                                                         |
 |--------|---------------|-----------------------------------------------------------------------------------------------------|
 | `POST` | `/api/start`  | Start the workload (or restart if running). Payload must include the key named in `config.yaml`.   |
-| `POST` | `/api/update` | Live config tweak. Returns 200 on success, 409 if unsupported, 400 if the app is not running.       |
+| `POST` | `/api/update` | Live config tweak (e.g., traffic control) without restart. Returns 200 on success, 409 if unsupported, 400 if the app is not running. |
 | `POST` | `/api/stop`   | Graceful stop.                                                                                      |
 | `GET`  | `/api/metrics`| JSON with container + adapter metrics.                                                              |
 | `GET`  | `/metrics`    | Prometheus exposition.                                                                              |
